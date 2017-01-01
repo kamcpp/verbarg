@@ -104,10 +104,10 @@ int ProcessArgs(int argc, char **argv, Args &args) {
   for (uint32_t i = 2; i < argc; i++) {
     if (not param_seen) {
       bool found = false;
-      for (auto param : PARAMS[args.verb]) {
-        if (std::find(param.literals.begin(), param.literals.end(), argv[i]) != param.literals.end()) {
+      for (auto p : PARAMS[args.verb]) {
+        if (std::find(p.literals.begin(), p.literals.end(), argv[i]) != p.literals.end()) {
           found = true;
-          param_obj = param;
+          param_obj = p;
           break;
         }
       }
@@ -115,7 +115,7 @@ int ProcessArgs(int argc, char **argv, Args &args) {
         std::cout << "ERROR: '" << argv[i] << "' is not a valid parameter for verb '" << args.verb << "'" << std::endl;
         return 1;
       }
-      param = argv[i];
+      param = param_obj.key;
       if (param_obj.has_value) {
         param_seen = true;
       } else {

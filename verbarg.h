@@ -19,6 +19,7 @@
 #pragma once
 
 #include <iostream>
+#include <iomanip>
 #include <algorithm>
 #include <vector>
 #include <map>
@@ -66,12 +67,14 @@ static std::map<std::string, std::vector<Param>> PARAMS = {
   PARAMS[v] = ps; \
 
 
-static void PrintFullHelpMessage(int argc, char **argv, Args &args);
+static void PrintUsageMessage(int argc, char **argv, Args &args);
 static void PrintListOfVerbs(int argc, char **argv, Args &args);
+static void PrintHelpForVerb(int argc, char **argv, Args &args, std::string target_verb);
 static bool IsVerbValid(std::string verb);
 static int ProcessArgs(int argc, char **argv, Args &args);
 
-void PrintFullHelpMessage(int argc, char **argv, Args &args) {
+void PrintUsageMessage(int argc, char **argv, Args &args) {
+  std::cout << std::endl;
   std::cout << "Usage: " << argv[0] << " [verb] [param value] [param value] ..." << std::endl;
   PrintListOfVerbs(argc, argv, args);
 }
@@ -79,7 +82,29 @@ void PrintFullHelpMessage(int argc, char **argv, Args &args) {
 void PrintListOfVerbs(int argc, char **argv, Args &args) {
   std::cout << "List of verbs:" << std::endl;
   for (auto verb : VERBS) {
-    std::cout << "  " << verb << "              " << VERB_DESC[verb] << std::endl;  
+    std::cout << "    " << std::left << std::setw(20) << verb;
+    std::cout << "> " << VERB_DESC[verb] << std::endl;
+  }
+  std::cout << std::endl;
+  std::cout << "Please type '" << argv[0] << " help [verb]' to see help for each verb." << std::endl;
+  std::cout << std::endl;
+}
+
+void PrintHelpForVerb(int argc, char **argv, Args &args, std::string target_verb) {
+  uint32_t max_col_width = 50;
+  for (auto p : PARAMS[target_verb]) {
+    std::string delim = "";
+    std::string literals = "";
+    for (auto literal : p.literals) {
+      literals += delim + literal;
+      delim = " | ";
+    }
+    std::cout << "    " << std::left << std::setw(max_col_width) << literals;
+    if (literals.size() >= max_col_width) {
+      std::cout << std::endl << "    " << std::right << std::setw(max_col_width + p.description.size() + 2) << "> " + p.description << std::endl;
+    } else {
+      std::cout << "> " << p.description << std::endl;
+    }
   }
 }
 
@@ -89,10 +114,25 @@ bool IsVerbValid(std::string verb) {
 
 int ProcessArgs(int argc, char **argv, Args &args) {
   if (argc < 2) {
-    PrintFullHelpMessage(argc, argv, args);
+    PrintUsageMessage(argc, argv, args);
     return 1;
   }
   args.verb = argv[1];
+  if (args.verb == "help") {
+    if (argc == 2) {
+      PrintUsageMessage(argc, argv, args);
+      return 1;
+    } else {
+      std::string target_verb = argv[2];
+      if (not IsVerbValid(target_verb)) {
+        std::cout << "ERROR: '" << target_verb << "' is not a valid verb!" << std::endl;
+        PrintListOfVerbs(argc, argv, args);
+        return 1;  
+      }
+      PrintHelpForVerb(argc, argv, args, target_verb);
+      return 1;
+    }
+  }
   if (not IsVerbValid(args.verb)) {
     std::cout << "ERROR: '" << args.verb << "' is not a valid verb!" << std::endl;
     PrintListOfVerbs(argc, argv, args);
@@ -114,7 +154,7 @@ int ProcessArgs(int argc, char **argv, Args &args) {
       }
       if (not found) {
         std::cout << "ERROR: '" << argv[i] << "' is not a valid parameter for verb '" << args.verb << "'" << std::endl;
-        PrintFullHelpMessage(argc, argv, args);
+        PrintUsageMessage(argc, argv, args);
         return 1;
       }
       param = param_obj.key;
@@ -139,7 +179,7 @@ int ProcessArgs(int argc, char **argv, Args &args) {
           delim = ", ";
         }
         std::cout << "]." << std::endl;
-        PrintFullHelpMessage(argc, argv, args);
+        PrintUsageMessage(argc, argv, args);
         return 1;
       }
     }

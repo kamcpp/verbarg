@@ -180,7 +180,7 @@ int ProcessArgs(int argc, char **argv, Args &args) {
   for (auto p : PARAMS[args.verb]) {
     if (not p.optional) {
       if (args.pairs.find(p.key) == args.pairs.end()) {
-        std::cout << "ERROR: '" << p.key << "' parameter should be provided by one of the literalrs [";
+        std::cout << "ERROR: '" << p.key << "' parameter should be provided by one of the literals [";
         std::string delim = "";
         for (auto literal : p.literals) {
           std::cout << delim << literal;

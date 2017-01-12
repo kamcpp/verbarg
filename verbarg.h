@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <algorithm>
 #include <vector>
 #include <map>
@@ -40,15 +41,15 @@ struct Param {
   bool has_value;
 };
 
-std::vector<std::string> VERBS = {
+static std::vector<std::string> VERBS = {
   "help"
 };
 
-std::map<std::string, std::string> VERB_DESC = {
+static std::map<std::string, std::string> VERB_DESC = {
   {"help", "Print this help message."}
 };
 
-std::map<std::string, std::vector<Param>> PARAMS = {
+static std::map<std::string, std::vector<Param>> PARAMS = {
   {"help", {}}
 };
 
@@ -65,13 +66,13 @@ std::map<std::string, std::vector<Param>> PARAMS = {
   PARAMS[v] = ps; \
 
 
-void PrintFullHelpMessage(int argc, char **argv, Args &args);
-void PrintListOfVerbs(int argc, char **argv, Args &args);
-bool IsVerbValid(Args &args);
-int ProcessArgs(int argc, char **argv, Args &args);
+static void PrintFullHelpMessage(int argc, char **argv, Args &args);
+static void PrintListOfVerbs(int argc, char **argv, Args &args);
+static bool IsVerbValid(std::string verb);
+static int ProcessArgs(int argc, char **argv, Args &args);
 
 void PrintFullHelpMessage(int argc, char **argv, Args &args) {
-  std::cout << "Usage: bip [verb] [param value] [param value] ..." << std::endl;
+  std::cout << "Usage: " << argv[0] << " [verb] [param value] [param value] ..." << std::endl;
   PrintListOfVerbs(argc, argv, args);
 }
 
@@ -113,6 +114,7 @@ int ProcessArgs(int argc, char **argv, Args &args) {
       }
       if (not found) {
         std::cout << "ERROR: '" << argv[i] << "' is not a valid parameter for verb '" << args.verb << "'" << std::endl;
+        PrintFullHelpMessage(argc, argv, args);
         return 1;
       }
       param = param_obj.key;
@@ -127,6 +129,20 @@ int ProcessArgs(int argc, char **argv, Args &args) {
       param_seen = false;
     }
   }
-  // TODO(kamran): Validate params.
+  for (auto p : PARAMS[args.verb]) {
+    if (not p.optional) {
+      if (args.pairs.find(p.key) == args.pairs.end()) {
+        std::cout << "ERROR: '" << p.key << "' parameter should be provided by one of the literalrs [";
+        std::string delim = "";
+        for (auto literal : p.literals) {
+          std::cout << delim << literal;
+          delim = ", ";
+        }
+        std::cout << "]." << std::endl;
+        PrintFullHelpMessage(argc, argv, args);
+        return 1;
+      }
+    }
+  }
   return 0;
 }

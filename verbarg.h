@@ -28,7 +28,6 @@
 struct Args {
   std::string verb;
   std::map<std::string, std::string> pairs;
-
   bool HasKey(std::string key) {
     return pairs.find(key) != pairs.end();
   }

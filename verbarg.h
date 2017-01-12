@@ -73,13 +73,13 @@ static void PrintHelpForVerb(int argc, char **argv, Args &args, std::string targ
 static bool IsVerbValid(std::string verb);
 static int ProcessArgs(int argc, char **argv, Args &args);
 
-void PrintUsageMessage(int argc, char **argv, Args &args) {
-  std::cout << std::endl;
+void PrintUsageMessage(int argc, char **argv, Args &args) {  
   std::cout << "Usage: " << argv[0] << " [verb] [param value] [param value] ..." << std::endl;
   PrintListOfVerbs(argc, argv, args);
 }
 
 void PrintListOfVerbs(int argc, char **argv, Args &args) {
+  std::cout << std::endl;
   std::cout << "List of verbs:" << std::endl;
   for (auto verb : VERBS) {
     std::cout << "    " << std::left << std::setw(20) << verb;
@@ -92,6 +92,8 @@ void PrintListOfVerbs(int argc, char **argv, Args &args) {
 
 void PrintHelpForVerb(int argc, char **argv, Args &args, std::string target_verb) {
   uint32_t max_col_width = 50;
+  std::cout << std::endl;
+  std::cout << "List of parameters for verb '" << target_verb << "':" << std::endl;
   for (auto p : PARAMS[target_verb]) {
     std::string delim = "";
     std::string literals = "";
@@ -101,11 +103,17 @@ void PrintHelpForVerb(int argc, char **argv, Args &args, std::string target_verb
     }
     std::cout << "    " << std::left << std::setw(max_col_width) << literals;
     if (literals.size() >= max_col_width) {
-      std::cout << std::endl << "    " << std::right << std::setw(max_col_width + p.description.size() + 2) << "> " + p.description << std::endl;
+      std::cout << std::endl << "    " << std::right << std::setw(max_col_width + p.description.size() + 2) << "> " + p.description;
     } else {
-      std::cout << "> " << p.description << std::endl;
+      std::cout << "> " << p.description;
+    }
+    if (p.optional) {
+      std::cout << " [OPTIONAL]" << std::endl;
+    } else {
+      std::cout << " [MANDATORY]" << std::endl;
     }
   }
+  std::cout << std::endl;
 }
 
 bool IsVerbValid(std::string verb) {
@@ -179,7 +187,7 @@ int ProcessArgs(int argc, char **argv, Args &args) {
           delim = ", ";
         }
         std::cout << "]." << std::endl;
-        PrintUsageMessage(argc, argv, args);
+        PrintHelpForVerb(argc, argv, args, args.verb);
         return 1;
       }
     }

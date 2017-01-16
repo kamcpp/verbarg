@@ -25,11 +25,31 @@
 #include <map>
 
 
+struct Args;
+struct Param;
+
+static void PrintUsageMessage(int argc, char **argv, Args &args);
+static void PrintListOfVerbs(int argc, char **argv, Args &args);
+static void PrintHelpForVerb(int argc, char **argv, Args &args, std::string target_verb);
+static bool IsVerbValid(std::string verb);
+static int ProcessArgs(int argc, char **argv, Args &args);
+
 struct Args {
+  int argc;
+  char **argv;
   std::string verb;
   std::map<std::string, std::string> pairs;
+  std::vector<std::string> VERBS;
+  std::map<std::string, std::string> VERB_DESC;
+  std::map<std::string, std::vector<Param>> PARAMS;
   bool HasKey(std::string key) {
     return pairs.find(key) != pairs.end();
+  }
+  void ShowVerbHelp() {
+    PrintHelpForVerb(argc, argv, *this, verb);
+  }
+  void ShowFullHelp() {
+    PrintUsageMessage(argc, argv, *this); 
   }
 };
 
@@ -65,13 +85,6 @@ static std::map<std::string, std::vector<Param>> PARAMS = {
   VERB_DESC[v] = vd; \
   PARAMS[v] = ps; \
 
-
-static void PrintUsageMessage(int argc, char **argv, Args &args);
-static void PrintListOfVerbs(int argc, char **argv, Args &args);
-static void PrintHelpForVerb(int argc, char **argv, Args &args, std::string target_verb);
-static bool IsVerbValid(std::string verb);
-static int ProcessArgs(int argc, char **argv, Args &args);
-
 void PrintUsageMessage(int argc, char **argv, Args &args) {  
   std::cout << "Usage: " << argv[0] << " [verb] [param value] [param value] ..." << std::endl;
   PrintListOfVerbs(argc, argv, args);
@@ -80,9 +93,9 @@ void PrintUsageMessage(int argc, char **argv, Args &args) {
 void PrintListOfVerbs(int argc, char **argv, Args &args) {
   std::cout << std::endl;
   std::cout << "List of verbs:" << std::endl;
-  for (auto verb : VERBS) {
+  for (auto verb : args.VERBS) {
     std::cout << "    " << std::left << std::setw(20) << verb;
-    std::cout << "> " << VERB_DESC[verb] << std::endl;
+    std::cout << "> " << args.VERB_DESC[verb] << std::endl;
   }
   std::cout << std::endl;
   std::cout << "Please type '" << argv[0] << " help [verb]' to see help for each verb." << std::endl;
@@ -93,7 +106,7 @@ void PrintHelpForVerb(int argc, char **argv, Args &args, std::string target_verb
   uint32_t max_col_width = 50;
   std::cout << std::endl;
   std::cout << "List of parameters for verb '" << target_verb << "':" << std::endl;
-  for (auto p : PARAMS[target_verb]) {
+  for (auto p : args.PARAMS[target_verb]) {
     std::string delim = "";
     std::string literals = "";
     for (auto literal : p.literals) {
@@ -120,6 +133,11 @@ bool IsVerbValid(std::string verb) {
 }
 
 int ProcessArgs(int argc, char **argv, Args &args) {
+  args.argc = argc;
+  args.argv = argv;
+  args.VERBS = VERBS;
+  args.VERB_DESC = VERB_DESC;
+  args.PARAMS = PARAMS;
   if (argc < 2) {
     PrintUsageMessage(argc, argv, args);
     return 1;
@@ -161,7 +179,7 @@ int ProcessArgs(int argc, char **argv, Args &args) {
       }
       if (not found) {
         std::cout << "ERROR: '" << argv[i] << "' is not a valid parameter for verb '" << args.verb << "'" << std::endl;
-        PrintUsageMessage(argc, argv, args);
+        PrintHelpForVerb(argc, argv, args, args.verb);
         return 1;
       }
       param = param_obj.key;
